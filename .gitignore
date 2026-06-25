@@ -1,0 +1,17 @@
+# Python environment files (keeps secrets hidden)
+.env
+.env.*
+
+# Python compilation files
+__pycache__/
+*.pyc
+
+# Local Python Virtual Environments
+venv/
+.venv/
+env/
+
+# IDE specific settings
+.vscode/
+.idea/
+.vs/
