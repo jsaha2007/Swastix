@@ -21,11 +21,40 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="build.py" />
+    <Compile Include="config.py" />
+    <Compile Include="database.py" />
+    <Compile Include="init_db.py" />
+    <Compile Include="main.py" />
+    <Compile Include="models\admin.py" />
+    <Compile Include="models\appointment.py" />
+    <Compile Include="models\doctor.py" />
+    <Compile Include="models\medical_document.py" />
+    <Compile Include="models\notification.py" />
+    <Compile Include="models\otp.py" />
+    <Compile Include="models\patient.py" />
+    <Compile Include="models\prescription.py" />
+    <Compile Include="models\rating.py" />
+    <Compile Include="models\timeslot.py" />
+    <Compile Include="models\__init__.py" />
     <Compile Include="SwastixPythonAPI.py" />
   </ItemGroup>
   <ItemGroup>
     <Content Include=".env" />
+    <Content Include=".env.example" />
+    <Content Include="Documentation\DATABASE_SCHEMA.md" />
+    <Content Include="Documentation\INDEX.md" />
+    <Content Include="Documentation\MIGRATION_GUIDE.md" />
+    <Content Include="Documentation\PHASE1_README.md" />
+    <Content Include="Documentation\Project Plan.docx" />
+    <Content Include="README.md" />
     <Content Include="requirements.txt" />
+    <Content Include="setup.bat" />
+    <Content Include="setup.sh" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="models\" />
+    <Folder Include="Documentation\" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
