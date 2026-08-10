@@ -86,9 +86,30 @@ SwastixPythonAPI/
 ---
 
 ## Current Status
-- **Stopped at**: About to start Phase 2 - Repository Layer
-- **Next task**: Create `repositories/` folder and `base_repository.py`
-- **Concept to explain**: Base Repository class (like a base class in C#)
+- **Stopped at**: Phase 2 - `AppointmentRepository` partially complete
+- **Next task**: Add 3 more methods to `AppointmentRepository`
+
+## Completed in Phase 2
+- ? Created `repositories/` folder
+- ? Created `repositories/__init__.py`
+- ? Created `repositories/base_repository.py` - COMPLETE
+  - Strongly typed using `Generic[T]` and `TypeVar`
+  - 4 methods: `get_by_id`, `get_all`, `create`, `delete`
+- ? Created `models/base.py` with `BaseModel` (id + created_at)
+- ? Updated all models to inherit from `BaseModel`
+- ? Created `repositories/patient_repository.py` - COMPLETE
+  - `get_by_userid`, `get_by_city`, `get_by_email`, `get_by_phone`
+- ? Created `repositories/doctor_repository.py` - COMPLETE
+  - `get_by_userid`, `get_by_city`, `get_by_specialization`, `get_approved_doctors`
+  - `get_doctors_by_fee_equal`, `get_doctors_by_fee_greater_than`, `get_doctors_by_fee_less_than`
+  - `get_by_name` (smart search - starts with first, then contains)
+- ?? Created `repositories/appointment_repository.py` - IN PROGRESS
+  - ? `get_by_doctor`, `get_by_patient`, `get_by_status`, `get_by_date`
+  - ? Still needs: `get_by_doctor_and_status`, `get_by_patient_and_status`, `get_doctor_appointments_by_date`
+  - ? Missing import: `from sqlalchemy.orm import Session`
+  - Inherits `BaseRepository[Patient]`
+  - Still needs 4 methods: `get_by_user_id`, `get_by_city`, `get_by_email`, `get_by_phone`
+  - `get_by_email` and `get_by_phone` require JOIN with `User` table
 
 ---
 

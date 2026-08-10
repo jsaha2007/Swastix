@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, Enum, Time
 from sqlalchemy.sql import func
-from database import Base
+from models.base import BaseModel
 import enum
 from datetime import time
 
@@ -23,11 +23,10 @@ class TimeslotStatus(str, enum.Enum):
     BLOCKED = "blocked"  # For holidays, time-offs, etc.
 
 
-class Timeslot(Base):
+class Timeslot(BaseModel):
     """Doctor timeslots for appointments"""
     __tablename__ = "timeslots"
 
-    id = Column(Integer, primary_key=True, index=True)
     doctor_id = Column(Integer, ForeignKey("doctors.id"), nullable=False, index=True)
 
     # Date and Time
@@ -45,7 +44,6 @@ class Timeslot(Base):
     # Notes (for blocked slots)
     notes = Column(String(500), nullable=True)
 
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     def __repr__(self):

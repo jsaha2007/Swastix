@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum
 from sqlalchemy.sql import func
-from database import Base
+from models.base import BaseModel
 import enum
 
 
@@ -14,11 +14,10 @@ class DocumentType(str, enum.Enum):
     OTHER = "other"
 
 
-class MedicalDocument(Base):
+class MedicalDocument(BaseModel):
     """Medical documents (prescriptions, diagnosis reports, etc.)"""
     __tablename__ = "medical_documents"
 
-    id = Column(Integer, primary_key=True, index=True)
     patient_id = Column(Integer, ForeignKey("patients.id"), nullable=False, index=True)
     appointment_id = Column(Integer, ForeignKey("appointments.id"), nullable=True, index=True)
     doctor_id = Column(Integer, ForeignKey("doctors.id"), nullable=True, index=True)
@@ -31,8 +30,6 @@ class MedicalDocument(Base):
 
     # Metadata
     uploaded_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # User who uploaded
-
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     def __repr__(self):

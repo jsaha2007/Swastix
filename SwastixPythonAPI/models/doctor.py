@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, Float, ForeignKey, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from database import Base
+from models.base import BaseModel
 import enum
 
 
@@ -20,11 +20,10 @@ class DoctorSpecialty(str, enum.Enum):
     OTHER = "other"
 
 
-class Doctor(Base):
+class Doctor(BaseModel):
     """Doctor model"""
     __tablename__ = "doctors"
 
-    id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False, index=True)
 
     # Personal Information
@@ -63,7 +62,6 @@ class Doctor(Base):
     average_rating = Column(Float, default=0.0)
     total_ratings = Column(Integer, default=0)
 
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     def __repr__(self):

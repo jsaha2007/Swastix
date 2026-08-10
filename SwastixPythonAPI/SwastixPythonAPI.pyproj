@@ -28,6 +28,7 @@
     <Compile Include="main.py" />
     <Compile Include="models\admin.py" />
     <Compile Include="models\appointment.py" />
+    <Compile Include="models\base.py" />
     <Compile Include="models\doctor.py" />
     <Compile Include="models\medical_document.py" />
     <Compile Include="models\notification.py" />
@@ -37,6 +38,13 @@
     <Compile Include="models\rating.py" />
     <Compile Include="models\timeslot.py" />
     <Compile Include="models\__init__.py" />
+    <Compile Include="repositories\base_repository.py" />
+    <Compile Include="repositories\appointment_repository.py" />
+    <Compile Include="repositories\doctor_repository.py" />
+    <Compile Include="repositories\patient_repository.py" />
+    <Compile Include="repositories\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="SwastixPythonAPI.py" />
   </ItemGroup>
   <ItemGroup>
@@ -47,6 +55,7 @@
     <Content Include="Documentation\MIGRATION_GUIDE.md" />
     <Content Include="Documentation\PHASE1_README.md" />
     <Content Include="Documentation\Project Plan.docx" />
+    <Content Include="PROGRESS.md" />
     <Content Include="README.md" />
     <Content Include="requirements.txt" />
     <Content Include="setup.bat" />
@@ -55,6 +64,7 @@
   <ItemGroup>
     <Folder Include="models\" />
     <Folder Include="Documentation\" />
+    <Folder Include="repositories\" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in

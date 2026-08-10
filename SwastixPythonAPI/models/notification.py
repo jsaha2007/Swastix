@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Boolean, Enum
 from sqlalchemy.sql import func
-from database import Base
+from models.base import BaseModel
 import enum
 
 
@@ -22,11 +22,10 @@ class NotificationChannel(str, enum.Enum):
     IN_APP = "in_app"
 
 
-class Notification(Base):
+class Notification(BaseModel):
     """Notifications for users"""
     __tablename__ = "notifications"
 
-    id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
 
     # Notification Details
@@ -49,7 +48,6 @@ class Notification(Base):
     retry_count = Column(Integer, default=0)
     last_retry_at = Column(DateTime(timezone=True), nullable=True)
 
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     def __repr__(self):

@@ -1,13 +1,12 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
 from sqlalchemy.sql import func
-from database import Base
+from models.base import BaseModel
 
 
-class Prescription(Base):
+class Prescription(BaseModel):
     """Prescriptions created by doctors"""
     __tablename__ = "prescriptions"
 
-    id = Column(Integer, primary_key=True, index=True)
     appointment_id = Column(Integer, ForeignKey("appointments.id"), nullable=False, index=True)
     patient_id = Column(Integer, ForeignKey("patients.id"), nullable=False, index=True)
     doctor_id = Column(Integer, ForeignKey("doctors.id"), nullable=False, index=True)
@@ -23,7 +22,6 @@ class Prescription(Base):
     is_active = Column(String(50), default=True)
     notes = Column(Text, nullable=True)
 
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     def __repr__(self):

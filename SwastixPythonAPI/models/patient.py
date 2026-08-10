@@ -1,14 +1,14 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from database import Base
+from models.base import BaseModel
 
 
-class Patient(Base):
+class Patient(BaseModel):
     """Patient model"""
     __tablename__ = "patients"
 
-    id = Column(Integer, primary_key=True, index=True)
+    
     user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False, index=True)
 
     # Personal Information
@@ -35,7 +35,6 @@ class Patient(Base):
     # Profile
     profile_picture_url = Column(String(500), nullable=True)
 
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     def __repr__(self):
