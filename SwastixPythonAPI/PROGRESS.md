@@ -80,8 +80,36 @@ SwastixPythonAPI/
 ---
 
 ## Current Status
-- **Stopped at**: Setting up Agent System (LangChain + Groq)
-- **Next task**: Fix `test_groq.py` error to verify Groq connection works
+- **Stopped at**: Designing Agent System folder structure
+- **Next task**: Create folder structure and start `base_agent.py`
+
+## Agent System Design (Agreed)
+- Agents are REUSABLE across projects (domain agnostic)
+- Orchestrators are PROJECT SPECIFIC (know about Swastix)
+- Pattern: Orchestrator coordinates agents, passes domain knowledge
+
+## Folder Structure to Create
+```
+agents/
+??? __init__.py
+??? base_agent.py              ? reusable base
+??? po_agent.py                ? reusable
+??? dev_agent.py               ? reusable
+??? data_preparer.py           ? reusable
+??? qa_agent.py                ? reusable
+??? orchestrators/
+    ??? __init__.py
+    ??? base_orchestrator.py   ? reusable base
+    ??? doctor_orchestrator.py ? Swastix specific
+    ??? patient_orchestrator.py? Swastix specific
+    ??? admin_orchestrator.py  ? Swastix specific
+```
+
+## Groq Setup - DONE ?
+- langchain + langchain-groq installed
+- GROQ_API_KEY in .env
+- Model: llama-3.3-70b-versatile
+- test_groq.py works successfully
 
 ## Agent System Plan
 - Framework: LangChain + langchain-groq (both installed ?)
