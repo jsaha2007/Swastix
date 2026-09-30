@@ -4,13 +4,15 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>4c0792a7-df12-429d-b042-255d5f33d6da</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>SwastixPythonAPI.py</StartupFile>
+    <StartupFile>test_po_agent.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <Name>SwastixPythonAPI</Name>
     <RootNamespace>SwastixPythonAPI</RootNamespace>
+    <InterpreterId>Global|VisualStudio|Scripts</InterpreterId>
+    <TestFramework>Pytest</TestFramework>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -21,7 +23,20 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="agents\base_agent.py" />
+    <Compile Include="agents\data_preparer_agent.py" />
+    <Compile Include="agents\dev_agent.py" />
+    <Compile Include="agents\orchestrators\admin_orchestrator.py" />
+    <Compile Include="agents\orchestrators\base_orchestrator.py" />
+    <Compile Include="agents\orchestrators\doctor_orchestrator.py" />
+    <Compile Include="agents\orchestrators\patient_orchestrator.py" />
+    <Compile Include="agents\orchestrators\__init__.py" />
+    <Compile Include="agents\po_agent.py" />
+    <Compile Include="agents\code_reviewer_agent.py" />
+    <Compile Include="agents\qa_agent.py" />
+    <Compile Include="agents\__init__.py" />
     <Compile Include="build.py" />
+    <Compile Include="check_groq_models.py" />
     <Compile Include="config.py" />
     <Compile Include="database.py" />
     <Compile Include="init_db.py" />
@@ -46,9 +61,11 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="SwastixPythonAPI.py" />
+    <Compile Include="test_admin_orchestrator.py" />
     <Compile Include="test_groq.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="test_po_agent.py" />
   </ItemGroup>
   <ItemGroup>
     <Content Include=".env" />
@@ -65,9 +82,19 @@
     <Content Include="setup.sh" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="agents\orchestrators\" />
     <Folder Include="models\" />
     <Folder Include="Documentation\" />
+    <Folder Include="agents\" />
+    <Folder Include="Code\" />
+    <Folder Include="CodeReviews\" />
+    <Folder Include="Data\" />
+    <Folder Include="Tests\" />
+    <Folder Include="UserStories\" />
     <Folder Include="repositories\" />
+  </ItemGroup>
+  <ItemGroup>
+    <InterpreterReference Include="Global|VisualStudio|Scripts" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in

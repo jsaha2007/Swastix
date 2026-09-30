@@ -1,0 +1,125 @@
+ID: 067fc2b6-861f-40c7-b59a-b98c784f051f. Timestamp: 20260820_183718
+## Product Vision (One‑sentence)
+
+> **Give patients and staff a fast, reliable way to find any doctor in the network by typing a name, address fragment, or both, so they can schedule appointments, verify coverage, or get directions.**
+
+---
+
+## High‑Level Feature Set
+
+| # | Feature | Short Description | Business Value* |
+|---|---------|-------------------|-----------------|
+| F1 | **Doctor Search UI** | A responsive search bar on the portal / mobile app that accepts free‑text (name, address, partial address, city, ZIP). | High – core entry point for most workflows (booking, verification). |
+| F2 | **Autocomplete / Type‑ahead** | Shows the top 5‑10 matching doctors as the user types, with name + practice address. | High – reduces typing effort, improves conversion. |
+| F3 | **Advanced Filters** | Optional toggles: specialty, status (active/inactive), distance radius, insurance accepted. | Medium – useful for power users, but not required for MVP. |
+| F4 | **Search Results List** | Paginated list with doctor name, title, practice address, phone, photo, and a “View profile” link. | High – must convey enough info to decide next step. |
+| F5 | **Map View Integration** | Show matching doctors as pins on an interactive map (Google/Mapbox). | Medium – enhances location‑based discovery. |
+| F6 | **Result Sorting** | Sort by relevance, distance, or alphabetical. | Low – nice‑to‑have for later releases. |
+| F7 | **Accessibility Compliance** | WCAG 2.2 AA – screen‑reader friendly, high‑contrast, keyboard navigation. | High – required for compliance. |
+| F8 | **Performance / Scalability** | Search response ≤ 300 ms for 95 % of queries, support ≥ 10 k concurrent users. | High – user experience & SLA. |
+| F9 | **Audit & Analytics** | Log search terms, click‑throughs, and conversion to appointments. | Medium – informs product decisions. |
+| F10| **Security & Privacy** | Enforce role‑based access, hide PII (e.g., no personal phone numbers for non‑logged‑in users). | High – regulatory compliance (HIPAA, GDPR). |
+
+\*Business value is expressed qualitatively for prioritization purposes.
+
+---
+
+## Prioritization (MoSCoW)
+
+| Priority | Features |
+|----------|----------|
+| **MUST** | F1, F2, F4, F7, F8, F10 |
+| **SHOULD**| F3, F5, F9 |
+| **COULD** | F6 |
+| **WON’T (this release)** | Any future “doctor rating”, “tele‑visit availability”, “AI‑suggested doctors”. |
+
+The **MVP** (Minimum Viable Product) will therefore consist of:
+
+- Search UI with autocomplete  
+- Results list (name + address)  
+- Accessibility, performance, and security baked in  
+
+Advanced filters, map view, analytics, and sorting will be added in subsequent sprints.
+
+---
+
+## Detailed Requirements
+
+| ID | Requirement | Type | Acceptance Criteria |
+|----|-------------|------|----------------------|
+| R1 | The search box must accept free‑text up to 100 characters. | Functional | *Given* a user is on the portal, *when* they type any combination of letters, numbers, commas, or spaces, the input is accepted without error. |
+| R2 | Autocomplete must start after the 2nd character and return ≤ 5 results within 250 ms. | Functional / Performance | *Given* the user typed “Jo”, *when* the 3rd character is entered, the system returns up to 5 suggestions in ≤ 250 ms. |
+| R3 | Each suggestion shows: Doctor’s full name, specialty abbreviation, street address, city, ZIP. | Functional | *Given* a suggestion is displayed, it contains all four fields and is clickable to populate the full query. |
+| R4 | Search results must be paginated (20 per page) with “Next/Prev” controls. | Functional | *Given* >20 matches, *when* the user clicks “Next”, the next 20 are shown. |
+| R5 | Results list must display: name, title (MD/DO), practice address, phone (masked for anonymous users), and a “View profile” CTA. | Functional | *Given* a result row, all fields are present and the CTA navigates to the doctor’s profile page. |
+| R6 | The system must rank results by relevance (name match > address match > partial match). | Functional / Non‑functional | *Given* a query “John 123 Main”, *when* results are displayed, the doctor named “John Smith” at “123 Main St.” appears first. |
+| R7 | The search API must be protected by OAuth2 bearer token and enforce rate‑limit of 30 QPS per user. | Security | *Given* an unauthenticated request, the API returns 401. *Given* a user exceeds 30 QPS, API returns 429. |
+| R8 | All UI components must be WCAG 2.2 AA compliant. | Accessibility | *Given* a screen‑reader, all elements have appropriate ARIA labels; keyboard navigation works without a mouse. |
+| R9 | Search latency (backend + network) ≤ 300 ms for 95 % of requests under load of 5 000 concurrent users. | Performance | Load‑test with JMeter/Locust shows 95 % of queries ≤ 300 ms. |
+| R10| Search logs must capture: user‑id (if logged), timestamp, query string, number of results, and whether a result was clicked. | Analytics | *Given* a user clicks a result, an audit entry is written within 100 ms. |
+| R11| The system must not expose any doctor’s personal mobile number unless the requester is an authenticated patient with a confirmed appointment. | Privacy | *Given* an anonymous visitor, the phone column shows “---”. *Given* a logged‑in patient with a scheduled visit, the full number is displayed. |
+
+---
+
+## User Stories (INVEST)
+
+> **Format:** *As a \<role>, I want \<goal> so that \<benefit>.*  
+> Acceptance criteria are expressed in **Given/When/Then** format.
+
+| # | Story | Acceptance Criteria |
+|---|-------|----------------------|
+| US‑01 | **As a patient, I want to type a doctor’s name or address into a search box and see instant suggestions, so I can quickly find the right provider.** | - AC1: Autocomplete appears after 2 characters.<br>- AC2: ≤5 suggestions displayed, each showing name + address.<br>- AC3: Selecting a suggestion fills the search box and triggers a full search. |
+| US‑02 | **As a patient, I want the search results list to show the doctor’s name, specialty, and practice address, so I can confirm I have the correct provider before booking.** | - AC1: List shows 20 items per page, with pagination controls.<br>- AC2: Each row contains name, title, address, masked phone, and “View profile”. |
+| US‑03 | **As a patient with a disability, I need the search UI to be fully keyboard‑navigable and screen‑reader friendly, so I can use it without a mouse.** | - AC1: Tab order follows logical flow.<br>- AC2: ARIA labels present on input, suggestions, pagination.<br>- AC3: No loss of functionality when using only keyboard. |
+| US‑04 | **As a system administrator, I need the search service to enforce rate limits and authentication, so the backend cannot be abused.** | - AC1: Requests without a valid OAuth token receive 401.<br>- AC2: More than 30 QPS per user returns 429.<br>- AC3: Rate‑limit counters reset per minute. |
+| US‑05 | **As a product analyst, I want every search event logged with key metadata, so I can measure usage and conversion.** | - AC1: Log entry includes user‑id (if any), timestamp, query, result count, click flag.<br>- AC2: Logs are written to a secure, immutable store within 100 ms of the event. |
+| US‑06 | **As a patient, I want the search to return results quickly (≤300 ms), so I don’t waste time waiting.** | - AC1: Under normal load (5 000 concurrent users) 95 % of queries complete ≤300 ms.<br>- AC2: Load test reports meet the SLA. |
+| US‑07 | **As a patient, I want the ability to filter results by specialty, so I can narrow down doctors that practice what I need.** *(Should‑level, future sprint)* | - AC1: A filter dropdown appears above results.<br>- AC2: Selecting “Cardiology” reduces list to only cardiologists.<br>- AC3: Filter state persists when paging. |
+| US‑08 | **As a patient, I want to view matching doctors on a map, so I can see which practice is closest to me.** *(Should‑level, future sprint)* | - AC1: “Map view” toggle switches UI to a map with pins.<br>- AC2: Clicking a pin opens a small tooltip with name + address.<br>- AC3: Map loads within 500 ms after results are fetched. |
+
+---
+
+## Acceptance Test Matrix (Sample)
+
+| Test ID | Story | Steps | Expected Result |
+|---------|-------|-------|-----------------|
+| AT‑01 | US‑01 | 1. Open portal → focus on search bar.<br>2. Type “Jo”.<br>3. Type “h”. | Autocomplete appears after “Jo”, showing ≤5 suggestions, each with name & address. |
+| AT‑02 | US‑02 | 1. Search “Smith”.<br>2. Verify first page shows 20 rows.<br>3. Click “Next”. | 20 rows displayed, each with required fields; pagination works. |
+| AT‑03 | US‑03 | 1. Tab to search bar.<br>2. Use Arrow keys to navigate suggestions.<br>3. Press Enter on a suggestion. | Focus moves correctly, suggestion selected, full search executed. |
+| AT‑04 | US‑04 | 1. Send request without token → expect 401.<br>2. Send 31 rapid requests with valid token → expect 429 on 31st. | Security responses as defined. |
+| AT‑05 | US‑06 | 1. Run JMeter script simulating 5 000 users, each performing 10 searches.<br>2. Capture response times. | 95 % ≤ 300 ms. |
+| AT‑06 | US‑05 | 1. Perform a search and click a result.<br>2. Query audit log. | Log entry with correct fields appears. |
+
+---
+
+## Technical Approach (High‑Level)
+
+| Layer | Technology | Rationale |
+|-------|------------|-----------|
+| **Front‑end** | React (or Angular) + TypeScript; UI library (MUI/Ant Design) | Component‑driven, easy to implement accessible autocomplete (ARIA‑combobox). |
+| **API Gateway** | Kong / AWS API Gateway with OAuth2 introspection | Centralized auth, rate‑limit enforcement. |
+| **Search Service** | Elasticsearch (or OpenSearch) cluster with custom analyzers (standard + edge‑ngram for prefix matches). | Fast full‑text on name + address, relevance scoring, geo‑distance queries (future map). |
+| **Data Store** | Relational DB (PostgreSQL) as source of truth; nightly ETL to ES. | Guarantees ACID for doctor records, easy to audit. |
+| **Caching** | Redis (TTL 5 min) for recent query results. | Reduces load, meets latency SLA. |
+| **Observability** | OpenTelemetry → Prometheus + Grafana for latency; ELK stack for audit logs. | End‑to‑end performance monitoring. |
+| **CI/CD** | GitHub Actions → Docker images → Kubernetes (auto‑scaling). | Consistent deployments, can scale pods based on CPU/RT metrics. |
+| **Security** | TLS 1.3 everywhere; OWASP‑Top‑10 hardening; secret management via Vault. | Compliance (HIPAA/GDPR). |
+
+---
+
+## Release Plan (4‑week sprints)
+
+| Sprint | Goal | Delivered Items |
+|--------|------|------------------|
+| **Sprint 1** (2 weeks) | **Foundations** | • API gateway with OAuth2 & rate‑limit.<br>• Elasticsearch index & ETL pipeline.<br>• Basic search endpoint (name/address). |
+| **Sprint 2** (2 weeks) | **MVP UI** | • Search bar with autocomplete.<br>• Results list + pagination.<br>• Accessibility checks.<br>• Performance testing harness. |
+| **Sprint 3** (2 weeks) | **Polish & Compliance** | • Masked phone logic, role‑based data exposure.<br>• Logging & audit pipeline.<br>• Load‑test & SLA verification.<br>• Documentation & user‑guide. |
+| **Sprint 4** (2 weeks) | **Optional Enhancements** | • Specialty filter (US‑07).<br>• Map view integration (US‑08).<br>• Sorting options.<br>• Release notes & rollout to production. |
+
+---
+
+## Risks & Mitigations
+
+| Risk | Impact | Likelihood | Mitigation |
+|------|--------|------------|------------|
+| **Data sync lag** – Elasticsearch index not up‑to‑date with DB. | Stale doctor info
