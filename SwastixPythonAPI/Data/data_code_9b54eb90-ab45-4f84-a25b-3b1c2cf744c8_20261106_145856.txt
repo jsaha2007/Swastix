@@ -1,0 +1,26 @@
+ID: 9b54eb90-ab45-4f84-a25b-3b1c2cf744c8. Timestamp: 20261106_145856
+# data_doctor_profile.py
+
+DOCTORS = [
+    {"id": 1, "firstName": "John", "lastName": "Doe"},
+    {"id": 2, "firstName": "Alice", "lastName": "Smith"},
+    {"id": 3, "firstName": "Bob", "lastName": "Brown"},
+    {"id": 4, "firstName": "Maria", "lastName": "García"},
+    {"id": 5, "firstName": "Liu", "lastName": "Wei"},
+]
+
+def get_doctor_by_id(doctor_id):
+    """
+    Retrieve a doctor's basic profile (firstName, lastName) by ID.
+    Returns the doctor dict if found, otherwise returns None.
+    """
+    for doctor in DOCTORS:
+        if doctor["id"] == doctor_id:
+            return {"firstName": doctor["firstName"], "lastName": doctor["lastName"]}
+    return None
+
+# Example usage for tests:
+#   profile = get_doctor_by_id(1)
+#   assert profile == {"firstName": "John", "lastName": "Doe"}
+#   missing = get_doctor_by_id(999)
+#   assert missing is None

@@ -1,0 +1,184 @@
+ID: 972f5298-ff35-4f80-a8f0-05635b253ce8. Timestamp: 20261106_145933
+# test_db.py
+import builtins
+import types
+import pytest
+from app import db as app_db
+
+
+class DummySession:
+    def __init__(self):
+        self.closed = False
+
+    def close(self):
+        self.closed = True
+
+
+def test_get_db_yields_session_and_closes(monkeypatch):
+    dummy = DummySession()
+    # Replace SessionLocal with a callable that returns dummy session
+    monkeypatch.setattr(app_db, "SessionLocal", lambda: dummy)
+
+    gen = app_db.get_db()
+    # First yield should give us the dummy session
+    session = next(gen)
+    assert session is dummy
+    # After generator is exhausted, the finally block should close the session
+    with pytest.raises(StopIteration):
+        next(gen)
+    assert dummy.closed is True
+
+
+# test_doctor_repository.py
+import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from app.db import Base
+from app.models.doctor import Doctor
+from app.repositories.doctor_repository import DoctorRepository
+
+
+@pytest.fixture
+def db_session():
+    engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
+    Base.metadata.create_all(bind=engine)
+    SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+    session = SessionLocal()
+    yield session
+    session.close()
+    engine.dispose()
+
+
+def test_get_by_id_returns_doctor(db_session):
+    doctor = Doctor(first_name="John", last_name="Doe", specialty="Cardiology", email="john@example.com")
+    db_session.add(doctor)
+    db_session.commit()
+    repo = DoctorRepository(db_session)
+    fetched = repo.get_by_id(doctor.id)
+    assert fetched is not None
+    assert fetched.first_name == "John"
+    assert fetched.last_name == "Doe"
+
+
+def test_get_by_id_returns_none_when_not_found(db_session):
+    repo = DoctorRepository(db_session)
+    assert repo.get_by_id(999) is None
+
+
+# test_doctor_service.py
+import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from app.db import Base
+from app.models.doctor import Doctor
+from app.services.doctor_service import DoctorService
+
+
+@pytest.fixture
+def db_session():
+    engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
+    Base.metadata.create_all(bind=engine)
+    SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+    session = SessionLocal()
+    yield session
+    session.close()
+    engine.dispose()
+
+
+def test_get_basic_profile_success(db_session):
+    doctor = Doctor(first_name="Alice", last_name="Smith")
+    db_session.add(doctor)
+    db_session.commit()
+    service = DoctorService(db_session)
+    profile = service.get_basic_profile(doctor.id)
+    assert profile == {"first_name": "Alice", "last_name": "Smith"}
+
+
+def test_get_basic_profile_raises_when_not_found(db_session):
+    service = DoctorService(db_session)
+    with pytest.raises(ValueError) as exc:
+        service.get_basic_profile(12345)
+    assert "Doctor not found" in str(exc.value)
+
+
+# test_auth.py
+import pytest
+from fastapi import HTTPException, status
+from app.dependencies import auth
+
+
+def test_admin_required_allows_admin():
+    # get_current_user_role returns "admin" by default
+    result = auth.admin_required()
+    assert result is True
+
+
+def test_admin_required_denies_non_admin(monkeypatch):
+    # Override get_current_user_role to return "user"
+    monkeypatch.setattr(auth, "get_current_user_role", lambda: "user")
+    with pytest.raises(HTTPException) as exc:
+        auth.admin_required()
+    assert exc.value.status_code == status.HTTP_403_FORBIDDEN
+    assert exc.value.detail == "Insufficient privileges"
+
+
+# test_doctors_api.py
+import pytest
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from app.main import app
+from app.db import Base, get_db
+from app.models.doctor import Doctor
+
+
+@pytest.fixture
+def db_session():
+    engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
+    Base.metadata.create_all(bind=engine)
+    SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+    session = SessionLocal()
+    yield session
+    session.close()
+    engine.dispose()
+
+
+@pytest.fixture
+def client(db_session):
+    # Override the get_db dependency to use the test session
+    def get_test_db():
+        try:
+            yield db_session
+        finally:
+            pass
+
+    app.dependency_overrides[get_db] = get_test_db
+    with TestClient(app) as c:
+        yield c
+    app.dependency_overrides.clear()
+
+
+def test_get_doctor_basic_profile_success(client, db_session):
+    doctor = Doctor(first_name="Maria", last_name="García")
+    db_session.add(doctor)
+    db_session.commit()
+    response = client.get(f"/api/doctors/{doctor.id}")
+    assert response.status_code == 200
+    assert response.json() == {"first_name": "Maria", "last_name": "García"}
+
+
+def test_get_doctor_basic_profile_not_found(client):
+    response = client.get("/api/doctors/9999")
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Doctor not found"
+
+
+def test_get_doctor_basic_profile_forbidden_when_not_admin(client, db_session, monkeypatch):
+    # Force get_current_user_role to return "user" to trigger 403
+    from app.dependencies import auth
+
+    monkeypatch.setattr(auth, "get_current_user_role", lambda: "user")
+    # Re-apply the dependency override for auth (FastAPI resolves it at request time)
+    response = client.get("/api/doctors/1")
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Insufficient privileges"

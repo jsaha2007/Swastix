@@ -1,0 +1,151 @@
+ID: 044719eb-01c8-452d-b5ac-8a167dc1b196. Timestamp: 20261106_145822
+## Swastix Doctor Booking System – Product Owner Overview  
+
+Below is a **structured product backlog** that captures the core capabilities you described, plus the specific backlog item you asked for (“Create a simple view doctor profile with only first and last name”).  
+
+The backlog is organized by **Epics → Features → User Stories** and includes:
+
+| **Item** | **Type** | **Priority** | **MoSCoW** | **Story Points** | **Status** | **Target Sprint** |
+|----------|----------|--------------|------------|------------------|------------|-------------------|
+| **E1 – Doctor Management** | Epic | High | Must | — | – | – |
+| F1‑1 – CRUD Doctor (basic data) | Feature | High | Must | — | – | – |
+| US‑1 – View Doctor Profile (first & last name only) | User Story | High | Must | 2 | Ready | Sprint 1 |
+| US‑2 – Create Doctor (first, last, specialty, email) | User Story | High | Must | 3 | Ready | Sprint 1 |
+| US‑3 – Edit Doctor (incl. schedule) | User Story | High | Must | 5 | Ready | Sprint 2 |
+| US‑4 – Delete/Deactivate Doctor | User Story | Medium | Should | 2 | Ready | Sprint 2 |
+| **E2 – Schedule Management** | Epic | High | Must | — | – | – |
+| F2‑1 – Define Doctor Working Hours | Feature | High | Must | — | – | – |
+| US‑5 – Add/Update Doctor’s Weekly Availability | User Story | High | Must | 5 | Ready | Sprint 2 |
+| US‑6 – Block Out Unavailable Slots (vacation, sick) | User Story | Medium | Should | 3 | Ready | Sprint 3 |
+| **E3 – Patient Management** | Epic | High | Must | — | – | – |
+| F3‑1 – CRUD Patient | Feature | High | Must | — | – | – |
+| US‑7 – Register New Patient (name, contact, DOB) | User Story | High | Must | 3 | Ready | Sprint 1 |
+| US‑8 – Edit Patient Details | User Story | Medium | Should | 3 | Ready | Sprint 2 |
+| US‑9 – De‑activate Patient | User Story | Low | Could | 2 | Ready | Sprint 3 |
+| **E4 – Appointment Booking** | Epic | High | Must | — | – | – |
+| F4‑1 – Book Appointment | Feature | High | Must | — | – | – |
+| US‑10 – Patient books appointment (select doctor, date, time) | User Story | High | Must | 8 | Ready | Sprint 3 |
+| US‑11 – Admin creates/overrides appointment | User Story | Medium | Should | 5 | Ready | Sprint 4 |
+| US‑12 – Cancel / Reschedule appointment | User Story | High | Must | 5 | Ready | Sprint 4 |
+| **E5 – Reporting Dashboard** | Epic | High | Must | — | – | – |
+| F5‑1 – Daily Volume Overview | Feature | High | Must | — | – | – |
+| US‑13 – View daily booking volume (chart) | User Story | High | Must | 5 | Ready | Sprint 5 |
+| US‑14 – View daily cancellation volume | User Story | Medium | Should | 3 | Ready | Sprint 5 |
+| US‑15 – View successful‑visit volume | User Story | Medium | Should | 3 | Ready | Sprint 5 |
+| US‑16 – Export reports (CSV, PDF) | User Story | Low | Could | 5 | Ready | Sprint 6 |
+
+> **Note:** Story points are relative (Fibonacci sequence) and are used for sprint planning only. Adjust as your team’s velocity becomes clear.
+
+---
+
+## Detailed User Story – “Create a simple view doctor profile with only first and last name”
+
+| **Field** | **Description** |
+|-----------|-----------------|
+| **Title** | **US‑1 – View Doctor Profile (first & last name only)** |
+| **As a** | Admin |
+| **I want** | to see a concise profile page for any doctor that displays only their first name and last name |
+| **So that** | I can quickly verify the doctor’s identity without loading unnecessary details (e.g., specialty, contact info) while performing admin tasks such as schedule adjustments or patient‑doctor assignments |
+
+### Acceptance Criteria (Definition of Done)
+
+1. **Navigation** – From the “Doctor List” page, clicking a doctor’s name opens a **Doctor Profile** modal or dedicated page.
+2. **Data Display** – The profile shows:
+   - **First Name** (text, required)
+   - **Last Name** (text, required)
+3. **UI Layout** – Simple, responsive layout (mobile‑friendly). No extra fields, icons, or actions other than a **Close** button.
+4. **Security** – Only users with **Admin** role can access this view. Unauthorized users receive a 403/redirect.
+5. **Performance** – Profile loads in ≤ 200 ms on a typical broadband connection (measured via Lighthouse or similar tool).
+6. **Error Handling** – If the doctor record cannot be retrieved (e.g., deleted after navigation), display a friendly error message: *“Doctor information could not be loaded. Please try again or contact support.”*
+7. **Testing** – Unit tests covering the component’s rendering logic (≥ 80 % coverage) and an end‑to‑end test that verifies navigation from list → profile → close.
+8. **Documentation** – Update the UI style guide and the admin user manual with a screenshot and description of the new view.
+
+### Tasks (breakdown for the development team)
+
+| **Task ID** | **Description** | **Owner** | **Est. (hrs)** |
+|-------------|-----------------|-----------|----------------|
+| T1‑US‑1 | Create API endpoint `GET /api/doctors/{id}` that returns `{firstName, lastName}` only (if not already existing). | Backend | 4 |
+| T2‑US‑1 | Add service method `DoctorService.getBasicProfile(id)` that calls the endpoint. | Frontend | 2 |
+| T3‑US‑1 | Build React (or Angular/Vue) component `DoctorBasicProfile` (modal or page) that consumes the service and renders first/last name. | Frontend | 6 |
+| T4‑US‑1 | Wire up navigation from Doctor List → Profile (click handler, routing). | Frontend | 2 |
+| T5‑US‑1 | Implement role‑based guard to restrict access to Admins only. | Frontend / Backend | 2 |
+| T6‑US‑1 | Write unit tests for component and service. | QA/Dev | 3 |
+| T7‑US‑1 | Write Cypress (or Selenium) e2e test: list → click → profile appears → close. | QA | 3 |
+| T8‑US‑1 | Add UI documentation and update admin manual. | Documentation | 2 |
+| **Total** | — | — | **26 hrs** (≈ 2 story points) |
+
+### Dependencies & Risks
+
+| **Dependency** | **Explanation** |
+|----------------|-----------------|
+| Doctor List page must already be functional (exists in Sprint 1 backlog). | If not, the navigation link cannot be wired. |
+| Backend authentication/role middleware must expose the Admin role to the front‑end. | Otherwise the guard will fail. |
+| API rate‑limit must allow the extra call without throttling. | Verify with ops. |
+
+**Risk Rating:** Low – simple read‑only view, no data mutation.
+
+---
+
+## Prioritisation Rationale  
+
+| **Priority** | **Why** |
+|--------------|----------|
+| **Must** (Core) | Anything required for the system to be usable for its primary purpose: doctor & patient CRUD, appointment booking, and the basic reporting needed for operational oversight. |
+| **Should** | Features that improve efficiency or data quality (e.g., block‑out slots, export reports). |
+| **Could** | Nice‑to‑have enhancements that do not affect the MVP (e.g., de‑activating patients, advanced analytics). |
+| **Won’t** (for now) | Features outside the current scope such as tele‑consultation integration, patient‑facing mobile app, or AI‑driven scheduling. |
+
+The **first sprint** focuses on the “foundational” pieces that enable the rest of the system:
+
+1. **Doctor profile view (US‑1)**
+2. **Create Doctor (US‑2)**
+3. **Register Patient (US‑7)**
+4. **Doctor List page** (already in backlog, not shown here but assumed)
+
+These give the admin a working “catalog” of doctors and patients, which later sprints can enrich with schedules, bookings, and dashboards.
+
+---
+
+## Definition of Done (DoD) – Global for All Stories  
+
+1. **Code** – Merged to `develop` branch, passes linting and static analysis.  
+2. **Tests** – Unit tests ≥ 80 % coverage, integration tests passing, at least one e2e test for the flow.  
+3. **Documentation** – Updated API spec (Swagger/OpenAPI), UI style guide, and user manual.  
+4. **Performance** – Meets defined latency thresholds (e.g., ≤ 200 ms for read‑only views).  
+5. **Security** – Role‑based access control verified; no sensitive data exposed.  
+6. **Deployable** – Feature flag ready, can be released to staging without affecting existing functionality.  
+7. **Stakeholder Review** – Demoed to PO and accepted based on acceptance criteria.  
+
+---
+
+## Next Steps for the Team  
+
+1. **Sprint Planning (Sprint 1)** – Pull the “Must” stories (US‑1, US‑2, US‑7, plus any prerequisite tasks such as setting up the API gateway).  
+2. **Refine Estimates** – During the planning meeting, confirm story‑point values with the development team.  
+3. **Create Tasks in JIRA (or your preferred tool)** – Use the task breakdown above as a template.  
+4. **Set Up CI/CD for the New Endpoint** – Ensure the backend build pipeline runs unit tests and publishes the Swagger doc.  
+5. **UX Review** – Have the design team provide a quick mock‑up for the simple doctor profile view (should be a one‑line card).  
+
+---
+
+### Quick Reference – User Story Template (for future backlog items)
+
+```
+Title: [US‑xx] – <Short description>
+As a <role>,
+I want <goal>,
+So that <benefit>.
+
+Acceptance Criteria:
+1. ...
+2. ...
+
+Definition of Done:
+- Code merged + linted
+- Unit / integration / e2e tests
+- Documentation updated
+- Performance & security checks passed
+- Stakeholder demo & sign‑off
+```
+
+Feel free to copy this template for the remaining backlog items. Let me know if you’d like deeper detail on any epic, a revised sprint schedule, or a visual roadmap!

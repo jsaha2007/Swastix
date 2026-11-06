@@ -1,7 +1,8 @@
 from agents.orchestrators.admin_orchestrator import AdminOrchestrator
 
 admin_orchestrator = AdminOrchestrator()
-result = admin_orchestrator.run("View reporting dashboard with daily booking and cancellation volume")
+#result = admin_orchestrator.run("View reporting dashboard with daily booking and cancellation volume")
+result = admin_orchestrator.run("Create a simple view doctor profile with only first and last name")
 
 print(f"Story saved at: {result['story']}")
 print(f"Code saved at: {result['code']}")

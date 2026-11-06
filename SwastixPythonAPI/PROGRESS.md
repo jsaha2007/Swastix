@@ -61,7 +61,7 @@ with open(path, "r", encoding="utf-8") as f:
 - Developer/tests should NOT call PoAgent/DevAgent/etc directly in real usage — that's only for sanity tests
 - Real flow: DoctorOrchestrator/PatientOrchestrator/AdminOrchestrator injects domain_context (Swastix + tech stack details) into the task BEFORE calling PoAgent.execute()
 - This is WHY early sanity test output was generic/wrong tech stack — expected, since orchestrator (which injects context) doesn't exist yet
-- Chain: Orchestrator.run(backlog_item) -> builds full_task = domain_context + backlog_item -> po.execute(full_task) -> story_path -> dev.execute(story_path) -> ... -> qa.execute(...)
+- Chain: Orchestrator.run(backlog_item) -> builds full_task = domain_context + backlog_item -> po.execute(full_task) -> story_path -> dev.execute(story_path) -> code_package -> reviewer/data/qa -> result dictionary
 
 ---
 
@@ -122,7 +122,7 @@ SwastixPythonAPI/
 ## Current Status
 - **Stopped at**: ALL THREE domain orchestrators COMPLETE - `doctor_orchestrator.py`, `patient_orchestrator.py`, `admin_orchestrator.py` all written, reviewed, and confirmed correct (imports verified against `base_orchestrator.py`)
 - **Sanity test created**: `test_admin_orchestrator.py` (in project root, same folder as `test_po_agent.py`) - instantiates `AdminOrchestrator`, calls `.run("View reporting dashboard with daily booking and cancellation volume")`, prints all 5 result paths (story/code/review/data/tests). NOT YET RUN - developer will run it in a future session.
-- **Next task**: Run `test_admin_orchestrator.py` to validate the full end-to-end pipeline (Po -> Dev -> CodeReviewer -> DataPreparer -> Qa) works for a real domain-contextualized backlog item. Then optionally write similar sanity tests for `doctor_orchestrator.py` / `patient_orchestrator.py`, or move to updating `PROGRESS.md` phase status and planning the next phase (full automation loop - see FUTURE PHASE VISION section).
+- **Next task**: Run `test_admin_orchestrator.py` to validate the full end-to-end multi-file pipeline (Po -> Dev -> CodeReviewer -> DataPreparer -> Qa) works for a real domain-contextualized backlog item. The LLM-backed run has not yet been executed after the multi-file changes.
 
 ## CONFIRMED PIPELINE ORDER (IMPORTANT - REVISED)
 ```
@@ -133,19 +133,28 @@ PoAgent (story) -> DevAgent (code) -> CodeReviewerAgent (review feedback) -> Dat
 - DataPreparerAgent takes the STORY file (not code file) as input - test data should reflect business requirements, not implementation details (developer + copilot agreed)
 - **REORDER REASON**: Originally QaAgent and DataPreparerAgent ran independently (QaAgent only saw code, DataPreparerAgent only saw story) - this meant QaAgent would invent placeholder data instead of using DataPreparerAgent's actual output. Fixed by moving DataPreparerAgent BEFORE QaAgent, and QaAgent.execute() now takes BOTH code_file_path and data_file_path as input, combining both into one prompt for the LLM.
 
+## MULTI-FILE CODE GENERATION (NEW)
+- `DevAgent` now requests a JSON response with a `files` list, where each item contains a relative `path` and complete `content`.
+- `DevAgent` validates the response and saves every generated file under a unique safe directory: `generated/feature_<uuid>/`.
+- `DevAgent.execute()` returns a package dictionary with `directory` and `files`, rather than one code-file path.
+- `CodeReviewerAgent` and `QaAgent` now read all files in that package and include file names in their prompts.
+- `BaseOrchestrator` passes the complete code package through review and QA and returns it under the `code` result key.
+- Generated files are intentionally kept under `generated/`; they are not automatically copied into production folders yet.
+- Python compilation was validated with `python -m compileall -q agents test_admin_orchestrator.py`.
+
 ## Agent Folder Structure
 ```
 agents/
 +-- __init__.py
 +-- base_agent.py              DONE (saveToFile is now a shared generic method here)
 +-- po_agent.py                DONE (uses self.saveToFile)
-+-- dev_agent.py                DONE (uses self.saveToFile)
++-- dev_agent.py                DONE (generates and saves multi-file feature packages)
 +-- code_reviewer_agent.py      DONE (NEW - reviews code quality, saves to CodeReviews/ folder)
 +-- qa_agent.py                DONE (generates pytest test files, saves to Tests/ folder)
 +-- data_preparer_agent.py      DONE (RENAMED from data_preparer.py -> data_preparer_agent.py, generates test data from story, saves to Data/ folder)
     +-- orchestrators/
     +-- __init__.py
-    +-- base_orchestrator.py    DONE (chains all 5 agents in confirmed order, returns dict of file paths)
+    +-- base_orchestrator.py    DONE (chains all 5 agents in confirmed order, returns paths plus code package)
     +-- doctor_orchestrator.py  DONE
     +-- patient_orchestrator.py DONE
     +-- admin_orchestrator.py   DONE
@@ -193,21 +202,21 @@ class BaseOrchestrator:
     def run(self, backlog_item: str) -> dict:
         full_task = f"{self.domain_context}\n\nBacklog Item: {backlog_item}"
         story_path = self.po.execute(full_task)
-        code_path = self.dev.execute(story_path)
-        review_path = self.code_reviewer.execute(code_path)
+        code_package = self.dev.execute(story_path)
+        review_path = self.code_reviewer.execute(code_package)
         data_path = self.data_preparer.execute(story_path)
-        test_path = self.qa.execute(code_path, data_path)
+        test_path = self.qa.execute(code_package, data_path)
 
         return {
             "story": story_path,
-            "code": code_path,
+            "code": code_package,
             "review": review_path,
             "data": data_path,
             "tests": test_path
         }
 ```
 
-## doctor_orchestrator.py / patient_orchestrator.py / admin_orchestrator.py - What to Write Next
+## doctor_orchestrator.py / patient_orchestrator.py / admin_orchestrator.py - COMPLETE
 - Each inherits `BaseOrchestrator`
 - Each `__init__` takes NO extra params, calls `super().__init__(domain_context="...")` with a domain-specific description (mention Swastix, FastAPI/SQLAlchemy/PostgreSQL tech stack, and the specific role's responsibilities - e.g. doctor manages availability/prescriptions, patient books appointments/searches doctors, admin approves doctors/manages platform)
 - No other methods needed - all logic lives in BaseOrchestrator.run()
@@ -260,7 +269,7 @@ class BaseAgent:
 ```
 
 ## FUTURE PHASE VISION (Confirmed with Developer - Not Yet Implemented)
-- Level 1 (current/today): Each agent generates text -> saves to file -> human manually reviews/copies into real project
+- Level 1 (current/today): Agents generate stories, multi-file source packages, reviews, data, and tests -> save outputs to files -> human manually reviews/copies approved code into the real project
 - Future phase goal: FULL AUTOMATION LOOP:
   - CodeReviewerAgent's findings should automatically feed back into DevAgent to FIX the code (not just report issues)
   - QaAgent's generated tests should be automatically EXECUTED (e.g., via pytest subprocess)
@@ -285,9 +294,12 @@ class PoAgent(BaseAgent):
         return path
 ```
 
-## dev_agent.py - COMPLETE
+## dev_agent.py - COMPLETE (UPDATED FOR MULTI-FILE GENERATION)
 ```python
 from agents.base_agent import BaseAgent
+import json
+import os
+import uuid
 
 class DevAgent(BaseAgent):
     def __init__(self):
@@ -296,24 +308,26 @@ class DevAgent(BaseAgent):
             goal="""You are a backend developer working with FastAPI, SQLAlchemy 2.0, and PostgreSQL.
 Read the given user story and implement the corresponding code.
 Maintain SOLID Principals how much we can. Follow repository pattern for database connection.
-The code flow should be Repository -> Service -> Controller and vice-versa.
-Only output the code - no explanations, no markdown formatting, no extra text."""
+The code flow should be Repository -> Service -> Controller and vice versa.
+Return valid JSON with a files list containing relative paths and complete file contents.
+Only output valid JSON - no explanations, no markdown formatting, no extra text."""
         )
 
     def execute(self, story_file_path):
         with open(story_file_path, "r", encoding="utf-8") as f:
             content = f.read()
-        code = super().execute(content)
-        path = self.saveToFile(code, "Code", "code")
-        return path
+        response = super().execute(content)
+        # Parse the JSON response, validate relative paths, and save each file under generated/feature_<uuid>/.
+        # See the actual source file for the complete implementation.
+        return {"directory": "generated/feature_<uuid>", "files": []}
 ```
 
 ## Sanity Test Status
 - DONE: `test_po_agent.py` ran successfully after fixing: model name, utf-8 encoding
 - Output was generic/wrong tech stack - EXPECTED, since PoAgent is called directly without domain context (see Agent Call Chain note above). Will be fixed once DoctorOrchestrator exists.
-- DEFERRED: sanity test for DevAgent (chained PoAgent -> DevAgent) - developer chose to keep building agents first, will test full chain later
+- DEFERRED: LLM-backed full orchestrator sanity test - `test_admin_orchestrator.py` exists but has not yet been run after the multi-file changes
 
-## qa_agent.py - COMPLETE (UPDATED - now takes code + data as TWO inputs)
+## qa_agent.py - COMPLETE (UPDATED - now takes a multi-file code package + data)
 ```python
 from agents.base_agent import BaseAgent
 
@@ -330,9 +344,10 @@ class QaAgent(BaseAgent):
             Only output the code - no explanations, no markdown formatting, no extra text."""
         )
 
-    def execute(self, code_file_path, data_file_path) -> str:
-        with open(code_file_path, "r", encoding="utf-8") as f:
-            code_content = f.read()
+    def execute(self, code_package, data_file_path) -> str:
+        # Reads every generated source file from code_package["files"], then reads data_file_path.
+        # The actual implementation combines all source files and test data for the LLM prompt.
+        code_content = "<all generated source files>"
         with open(data_file_path, "r", encoding="utf-8") as f:
             data_content = f.read()
 
@@ -341,7 +356,7 @@ class QaAgent(BaseAgent):
         path = self.saveToFile(test_code, "Tests", "test_code")
         return path
 ```
-- IMPORTANT: execute() signature changed from `execute(code_file_path)` to `execute(code_file_path, data_file_path)` - orchestrator must pass BOTH paths when calling QaAgent
+- IMPORTANT: execute() signature is now `execute(code_package, data_file_path)` - orchestrator must pass the complete generated package and data path
 
 ## code_reviewer_agent.py - COMPLETE (NEW AGENT)
 ```python
@@ -356,9 +371,9 @@ class CodeReviewerAgent(BaseAgent):
             List all the findings in a list and say no issues found if clean"""
         )
 
-    def execute(self, code_file_path):
-        with open(code_file_path, "r", encoding="utf-8") as f:
-            content = f.read()
+    def execute(self, code_package):
+        # Reads every generated source file from code_package["files"] for one combined review prompt.
+        content = "<all generated source files>"
         review = super().execute(content)
         path = self.saveToFile(review, "CodeReviews", "review_code")
         return path
@@ -436,7 +451,7 @@ Build a **Doctor Booking System for rural India** (FastAPI + PostgreSQL) with an
 
 
 
-## Folder Structure to Create
+## Agent Folder Structure (CURRENT)
 ```
 agents/
 ??? __init__.py
@@ -453,10 +468,10 @@ agents/
     ??? admin_orchestrator.py  ? Swastix specific
 ```
 
-## Groq Setup - DONE ?
+## Groq Setup - DONE
 - langchain + langchain-groq installed
 - GROQ_API_KEY in .env
-- Model: llama-3.3-70b-versatile
+- Model: openai/gpt-oss-120b
 - test_groq.py works successfully
 
 ## Agent System Plan
